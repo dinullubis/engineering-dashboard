@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Engineering Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+
+    body{
+      margin:0;
+      font-family:Arial;
+      background:#0f172a;
+      color:white;
+    }
+
+    .header{
+      padding:20px;
+      background:#111827;
+      border-bottom:1px solid #1f2937;
+    }
+
+    .title{
+      font-size:28px;
+      font-weight:bold;
+    }
+
+    .subtitle{
+      color:#9ca3af;
+      margin-top:5px;
+    }
+
+    .container{
+      padding:20px;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:15px;
+      margin-bottom:20px;
+    }
+
+    .card{
+      background:#1e293b;
+      padding:20px;
+      border-radius:12px;
+      border:1px solid #334155;
+    }
+
+    .card-title{
+      color:#94a3b8;
+      font-size:14px;
+    }
+
+    .card-value{
+      font-size:32px;
+      font-weight:bold;
+      margin-top:10px;
+    }
+
+    .table-container{
+      background:#1e293b;
+      border-radius:12px;
+      padding:20px;
+      overflow:auto;
+      border:1px solid #334155;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    th, td{
+      padding:12px;
+      border-bottom:1px solid #334155;
+      text-align:left;
+    }
+
+    th{
+      background:#0f172a;
+    }
+
+    canvas{
+      background:white;
+      border-radius:10px;
+      padding:10px;
+      margin-top:20px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="title">Engineering Attendance & OT Dashboard</div>
+    <div class="subtitle">Realtime Monitoring Engineering Team</div>
+  </div>
+
+  <div class="container">
+
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-title">Total Manpower</div>
+        <div class="card-value" id="totalManpower">0</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Total Hadir</div>
+        <div class="card-value" id="totalHadir">0</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Total Sakit</div>
+        <div class="card-value" id="totalSakit">0</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Total OT Jam</div>
+        <div class="card-value" id="totalOT">0</div>
+      </div>
+
+    </div>
+
+    <div class="table-container">
+
+      <h2>Top OT Person</h2>
+
+      <table id="tableData">
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Total OT</th>
+          </tr>
+        </thead>
+
+        <tbody></tbody>
+
+      </table>
+
+      <canvas id="chartOT"></canvas>
+
+    </div>
+
+  </div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbzUzyyEU6KyB3mmp6OiUQYYWCVYU5iLEL8h0NujL5HSXNDfcCbUu8f0h4FnAfRHK1U/exec";
+
+async function loadData(){
+
+  const response = await fetch(API_URL);
+  const data = await response.json();
+
+  const manpower = [...new Set(data.map(x => x.Nama))].length;
+
+  const hadir = data.filter(x => x.Status === "Hadir").length;
+
+  const sakit = data.filter(x => x.Status === "Sakit").length;
+
+  const totalOT = data
+    .reduce((sum,x)=>sum + Number(x["Jam Lembur"] || 0),0);
+
+  document.getElementById("totalManpower").innerText = manpower;
+
+  document.getElementById("totalHadir").innerText = hadir;
+
+  document.getElementById("totalSakit").innerText = sakit;
+
+  document.getElementById("totalOT").innerText =
+    totalOT.toFixed(1);
+
+  const otMap = {};
+
+  data.forEach(x=>{
+
+    const nama = x.Nama;
+    const jam = Number(x["Jam Lembur"] || 0);
+
+    if(!otMap[nama]){
+      otMap[nama]=0;
+    }
+
+    otMap[nama]+=jam;
+
+  });
+
+  const sorted = Object.entries(otMap)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,10);
+
+  const tbody = document.querySelector("#tableData tbody");
+
+  tbody.innerHTML="";
+
+  sorted.forEach(row=>{
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${row[0]}</td>
+        <td>${row[1].toFixed(1)}</td>
+      </tr>
+    `;
+
+  });
+
+  const ctx = document.getElementById("chartOT");
+
+  new Chart(ctx,{
+
+    type:"bar",
+
+    data:{
+      labels:sorted.map(x=>x[0]),
+
+      datasets:[{
+        label:"Total OT",
+        data:sorted.map(x=>x[1])
+      }]
+    }
+
+  });
+
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
