@@ -4,7 +4,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzUzyyEU6KyB3mmp6OiUQYY
 
 async function loadData() {
 
-  const response = await fetch(API_URL);
+  const response = await fetch(API_URL + "?nocache=" + new Date().getTime());
   const data = await response.json();
 
   console.log(data);
