@@ -153,7 +153,17 @@
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzUzyyEU6KyB3mmp6OiUQYYWCVYU5iLEL8h0NujL5HSXNDfcCbUu8f0h4FnAfRHK1U/exec";
 
-async function loadData(){
+async function loadData() {
+
+  const response = await fetch(
+    "https://script.google.com/macros/s/AKfycbzUzyyEU6KyB3mmp6OiUQYYWCVYU5iLEL8h0NujL5HSXNDfcCbUu8f0h4FnAfRHK1U/exec"
+  );
+
+  const data = await response.json();
+
+  console.log(data);
+
+}
 
   const response = await fetch(API_URL);
   const data = await response.json();
